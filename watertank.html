@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Water Tank Problem</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f6f8;
+    display:flex;
+    justify-content:center;
+    padding:40px;
+}
+
+.container{
+    background:#fff;
+    padding:20px;
+    border-radius:8px;
+    width:820px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
+
+input{
+    width:100%;
+    padding:10px;
+    font-size:16px;
+    margin:10px 0;
+}
+
+button{
+    width:100%;
+    padding:10px;
+    font-size:16px;
+    background:#007bff;
+    color:white;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+svg{
+    width:100%;
+    height:260px;
+    background:#eef5ff;
+    margin:15px 0;
+    border-radius:6px;
+}
+
+.block{
+    fill:#FFD54F;     /* yellow */
+    stroke:#333;
+    stroke-width:1;
+}
+
+.water{
+    fill:#9ad9ff;     /* light blue */
+    stroke:#333;
+    stroke-width:1;
+}
+
+.label{
+    font-size:12px;
+    fill:#333;
+    text-anchor:middle;
+}
+
+h3{ margin-top:24px; }
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h2>Water Tank Problem</h2>
+
+<input id="heights" placeholder="Enter heights (e.g. 0,4,0,0,6,0,3)">
+<button onclick="visualize()">Visualize</button>
+
+<h3>Input:</h3>
+<svg id="svgInput"></svg>
+
+<h3>Water Tank Problem Answer:</h3>
+<p>Total trapped water: <b><span id="total">0</span></b></p>
+<svg id="svgResult"></svg>
+
+</div>
+
+<script>
+function visualize(){
+    const heights = document.getElementById("heights")
+                    .value.split(',').map(Number);
+
+    const n = heights.length;
+    if(n === 0) return;
+
+    // ---- Water Tank code ----
+    let leftMax=[], rightMax=[], water=[], total=0;
+
+    leftMax[0]=heights[0];
+    for(let i=1;i<n;i++)
+        leftMax[i]=Math.max(leftMax[i-1], heights[i]);
+
+    rightMax[n-1]=heights[n-1];
+    for(let i=n-2;i>=0;i--)
+        rightMax[i]=Math.max(rightMax[i+1], heights[i]);
+
+    for(let i=0;i<n;i++){
+        water[i]=Math.max(
+            Math.min(leftMax[i], rightMax[i]) - heights[i], 0
+        );
+        total+=water[i];
+    }
+
+    document.getElementById("total").innerText=total;
+
+    // All yellow blocks
+    drawGrid("svgInput", heights, water, true);
+
+    // Water trapped visualization
+    drawGrid("svgResult", heights, water, false);
+}
+
+// ---- GRID DRAW FUNCTION ----
+function drawGrid(id, heights, water, allYellow){
+    const svg=document.getElementById(id);
+    svg.innerHTML="";
+
+    const w=svg.clientWidth;
+    const h=svg.clientHeight;
+    const n=heights.length;
+
+    const maxH = Math.max(...heights.map((v,i)=>v+water[i]),1);
+    const brickW = w / n;
+    const brickH = (h - 30) / maxH; // space for labels
+
+    for(let i=0;i<n;i++){
+        const baseX = i * brickW;
+        const totalBricks = heights[i] + water[i];
+
+        for(let b=0;b<totalBricks;b++){
+            const isBlock = b < heights[i];
+            const cls = allYellow ? "block" : (isBlock ? "block" : "water");
+
+            drawBrick(
+                svg,
+                baseX + 1,
+                h - 30 - (b + 1) * brickH,
+                brickW - 2,
+                brickH - 2,
+                cls
+            );
+        }
+
+        // bottom label (input value)
+        const label=document.createElementNS("http://www.w3.org/2000/svg","text");
+        label.setAttribute("x", baseX + brickW / 2);
+        label.setAttribute("y", h - 8);
+        label.setAttribute("class", "label");
+        label.textContent = heights[i];
+        svg.appendChild(label);
+    }
+}
+
+// ---- DRAW SINGLE BRICK ----
+function drawBrick(svg,x,y,w,h,cls){
+    const r=document.createElementNS("http://www.w3.org/2000/svg","rect");
+    r.setAttribute("x",x);
+    r.setAttribute("y",y);
+    r.setAttribute("width",w);
+    r.setAttribute("height",h);
+    r.setAttribute("class",cls);
+    svg.appendChild(r);
+}
+</script>
+
+</body>
+</html>
